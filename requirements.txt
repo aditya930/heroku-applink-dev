@@ -1,0 +1,5 @@
+heroku_applink
+fastapi
+weasyprint
+pydantic
+uvicorn
