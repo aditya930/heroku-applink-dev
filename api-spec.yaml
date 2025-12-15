@@ -16,14 +16,14 @@ info:
   version: 1.0.0
   contact:
     name: API Support
-    email: support@example.com
+    email: aditya.mohandas@gmail.com
 
 servers:
-  - url: https://{app-name}.herokuapp.com
+  - url: https://applink-service-cf5401091eb4.herokuapp.com
     description: Heroku Production Server
     variables:
       app-name:
-        default: your-app-name
+        default: applink-service
         description: Your Heroku app name
 
 paths:
