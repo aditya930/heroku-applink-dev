@@ -4,19 +4,10 @@ info:
   description: |
     A Heroku AppLink microservice that generates PDF quotes from Salesforce Opportunity data.
     This API is designed to be invoked from Salesforce via Heroku AppLink integration.
-
-    ## Features
-    - Generates professional PDF quotes from Opportunity and Quote Line Item data
-    - Automatically uploads the generated PDF back to Salesforce as a ContentVersion
-    - Links the PDF to the originating Opportunity record
-
-    ## Authentication
-    Authentication is handled automatically by Heroku AppLink service mesh.
-    All requests are authenticated and authorized through the Salesforce-Heroku secure connection.
   version: 1.0.0
   contact:
     name: API Support
-    email: aditya.mohandas@gmail.com
+    email: support@example.com
 
 servers:
   - url: https://applink-service-cf5401091eb4.herokuapp.com
@@ -44,12 +35,6 @@ paths:
                 summary: Standard Request
                 value:
                   opportunityId: "006XXXXXXXXXXXXXXX"
-              withOptions:
-                summary: Request with Options
-                value:
-                  opportunityId: "006XXXXXXXXXXXXXXX"
-                  includeTerms: true
-                  templateName: "standard"
       responses:
         "200":
           description: PDF generated and attached successfully
@@ -65,21 +50,8 @@ paths:
                     message: "PDF generated and attached to Opportunity."
                     contentDocumentId: "069XXXXXXXXXXXXXXX"
                     contentVersionId: "068XXXXXXXXXXXXXXX"
-        "400":
-          description: Bad Request - Invalid input parameters
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                missingId:
-                  summary: Missing Opportunity ID
-                  value:
-                    status: "error"
-                    message: "opportunityId is required"
-                    errorCode: "INVALID_REQUEST"
         "404":
-          description: Opportunity not found or no Quote Line Items
+          description: Opportunity not found
           content:
             application/json:
               schema:
@@ -89,7 +61,7 @@ paths:
                   summary: Opportunity Not Found
                   value:
                     status: "error"
-                    message: "Opportunity not found or no associated Quote Line Items."
+                    message: "Opportunity not found"
                     errorCode: "NOT_FOUND"
         "500":
           description: Internal Server Error
@@ -127,35 +99,6 @@ paths:
                     version: "1.0.0"
                     timestamp: "2025-12-15T10:30:00Z"
 
-  /templates:
-    get:
-      operationId: listTemplates
-      summary: List Available PDF Templates
-      description: Returns a list of available PDF templates for quote generation
-      tags:
-        - Templates
-      responses:
-        "200":
-          description: List of available templates
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TemplatesResponse"
-              examples:
-                templates:
-                  summary: Available Templates
-                  value:
-                    templates:
-                      - name: "standard"
-                        description: "Standard quote template"
-                        isDefault: true
-                      - name: "professional"
-                        description: "Professional quote with company branding"
-                        isDefault: false
-                      - name: "minimal"
-                        description: "Minimal clean design"
-                        isDefault: false
-
 components:
   schemas:
     GenerateQuotePdfRequest:
@@ -166,28 +109,7 @@ components:
         opportunityId:
           type: string
           description: The Salesforce Opportunity ID (18-character ID)
-          pattern: "^006[a-zA-Z0-9]{15}$"
           example: "006XXXXXXXXXXXXXXX"
-        includeTerms:
-          type: boolean
-          description: Whether to include terms and conditions in the PDF
-          default: false
-        templateName:
-          type: string
-          description: Name of the PDF template to use
-          default: "standard"
-          enum:
-            - standard
-            - professional
-            - minimal
-        customHeader:
-          type: string
-          description: Custom header text for the PDF
-          maxLength: 200
-        customFooter:
-          type: string
-          description: Custom footer text for the PDF
-          maxLength: 500
 
     GenerateQuotePdfResponse:
       type: object
@@ -212,10 +134,6 @@ components:
           type: string
           description: Salesforce ContentVersion ID of the uploaded PDF
           example: "068XXXXXXXXXXXXXXX"
-        pdfUrl:
-          type: string
-          description: URL to view the PDF in Salesforce
-          format: uri
 
     ErrorResponse:
       type: object
@@ -235,15 +153,8 @@ components:
           type: string
           description: Machine-readable error code
           enum:
-            - INVALID_REQUEST
             - NOT_FOUND
-            - UNAUTHORIZED
             - INTERNAL_ERROR
-            - SALESFORCE_ERROR
-        details:
-          type: object
-          description: Additional error details
-          additionalProperties: true
 
     HealthResponse:
       type: object
@@ -263,41 +174,12 @@ components:
           format: date-time
           description: Current server timestamp
 
-    TemplatesResponse:
-      type: object
-      required:
-        - templates
-      properties:
-        templates:
-          type: array
-          items:
-            $ref: "#/components/schemas/Template"
-
-    Template:
-      type: object
-      required:
-        - name
-        - description
-      properties:
-        name:
-          type: string
-          description: Template identifier
-        description:
-          type: string
-          description: Human-readable template description
-        isDefault:
-          type: boolean
-          description: Whether this is the default template
-          default: false
-
   securitySchemes:
     AppLinkAuth:
       type: apiKey
       in: header
       name: X-AppLink-Token
-      description: |
-        Authentication is handled by Heroku AppLink service mesh.
-        This token is automatically injected by the AppLink middleware.
+      description: Authentication is handled by Heroku AppLink service mesh.
 
 security:
   - AppLinkAuth: []
@@ -305,7 +187,5 @@ security:
 tags:
   - name: Quote Generation
     description: Endpoints for generating PDF quotes
-  - name: Templates
-    description: PDF template management
   - name: System
     description: System health and status endpoints
