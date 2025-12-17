@@ -94,7 +94,7 @@ def create_pdf_from_opportunity_data(opportunity_data: dict, quote_lines: list) 
     total_amount = 0
     
     for line in quote_lines:
-        name = line.get('Name', 'N/A')
+        description = line.get('Description', 'N/A')
         quantity = line.get('Quantity', 0) or 0
         unit_price = line.get('UnitPrice', 0) or 0
         total_price = line.get('TotalPrice', 0) or 0
@@ -102,7 +102,7 @@ def create_pdf_from_opportunity_data(opportunity_data: dict, quote_lines: list) 
         
         line_items_html += f"""
             <tr>
-                <td>{name}</td>
+                <td>{description}</td>
                 <td style="text-align: center;">{quantity}</td>
                 <td style="text-align: right;">${unit_price:,.2f}</td>
                 <td style="text-align: right;">${total_price:,.2f}</td>
@@ -160,7 +160,7 @@ def create_pdf_from_opportunity_data(opportunity_data: dict, quote_lines: list) 
         <table>
             <thead>
                 <tr>
-                    <th>Item Name</th>
+                    <th>Description</th>
                     <th style="text-align: center;">Quantity</th>
                     <th style="text-align: right;">Unit Price</th>
                     <th style="text-align: right;">Total</th>
@@ -243,7 +243,7 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
         
         # Query for Quote Line Items
         quote_lines_query = f"""
-            SELECT Id, Name, Quantity, UnitPrice, TotalPrice
+            SELECT Id, Description, Quantity, UnitPrice, TotalPrice
             FROM QuoteLineItem 
             WHERE Quote.OpportunityId = '{opportunity_id}'
         """
