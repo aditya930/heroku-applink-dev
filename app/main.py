@@ -13,6 +13,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 import heroku_applink as sdk
 from weasyprint import HTML
+# Global exception handler to ensure ALL errors return JSON
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # =============================================================================
 # Pydantic Models
@@ -63,6 +65,34 @@ app = FastAPI(
 
 # Add Heroku AppLink middleware for secure Salesforce integration
 app.add_middleware(sdk.IntegrationAsgiMiddleware)
+
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Handle HTTP exceptions and return JSON"""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "status": "error",
+            "message": exc.detail if isinstance(exc.detail, str) else str(exc.detail),
+            "errorCode": "HTTP_ERROR"
+        }
+    )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch ALL exceptions (including middleware errors) and return JSON"""
+    import traceback
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "message": f"Internal Server Error: {str(exc)}",
+            "errorCode": "INTERNAL_ERROR",
+            "exception_type": str(type(exc).__name__)
+        }
+    )
 
 
 # =============================================================================
