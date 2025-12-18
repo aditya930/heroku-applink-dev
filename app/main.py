@@ -9,6 +9,7 @@ import base64
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from heroku_applink import IntegrationAsgiMiddleware, get_client_context
 from heroku_applink.data_api import DataAPI
@@ -234,9 +235,9 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
         opp_result = await data_api.query(opp_query)
         
         if not opp_result.records:
-            raise HTTPException(
-                status_code=404, 
-                detail={"status": "error", "message": "Opportunity not found", "errorCode": "NOT_FOUND"}
+            return JSONResponse(
+                status_code=404,
+                content={"status": "error", "message": "Opportunity not found", "errorCode": "NOT_FOUND"}
             )
         
         opp_record = opp_result.records[0].fields
@@ -291,13 +292,16 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
             contentVersionId=content_version_id
         )
         
-    except HTTPException:
-        raise
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content=e.detail if isinstance(e.detail, dict) else {"status": "error", "message": str(e.detail), "errorCode": "HTTP_ERROR"}
+        )
     except Exception as e:
         print(f"Error generating PDF: {e}")
-        raise HTTPException(
+        return JSONResponse(
             status_code=500,
-            detail={"status": "error", "message": f"Internal Server Error: {str(e)}", "errorCode": "INTERNAL_ERROR"}
+            content={"status": "error", "message": f"Internal Server Error: {str(e)}", "errorCode": "INTERNAL_ERROR"}
         )
 
 
