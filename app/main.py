@@ -11,8 +11,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from heroku_applink import IntegrationAsgiMiddleware, get_client_context
-from heroku_applink.data_api import DataAPI
+import heroku_applink as sdk
 from weasyprint import HTML
 
 # =============================================================================
@@ -63,33 +62,7 @@ app = FastAPI(
 )
 
 # Add Heroku AppLink middleware for secure Salesforce integration
-app.add_middleware(IntegrationAsgiMiddleware)
-
-# Global exception handler to ensure all errors return JSON
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Catch all exceptions and return JSON"""
-    return JSONResponse(
-        status_code=500,
-        content={
-            "status": "error",
-            "message": f"Internal Server Error: {str(exc)}",
-            "errorCode": "INTERNAL_ERROR"
-        }
-    )
-
-@app.exception_handler(KeyError)
-async def key_error_handler(request: Request, exc: KeyError):
-    """Handle KeyError (typically authentication issues)"""
-    return JSONResponse(
-        status_code=401,
-        content={
-            "status": "error",
-            "message": "Authentication failed. Heroku AppLink connection may not be configured properly.",
-            "errorCode": "AUTH_ERROR",
-            "details": f"Missing key: {str(exc)}"
-        }
-    )
+app.add_middleware(sdk.IntegrationAsgiMiddleware)
 
 
 # =============================================================================
@@ -245,8 +218,8 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
     """
     try:
         # Get the secure client context from Heroku AppLink middleware
-        client_context = get_client_context()
-        data_api: DataAPI = client_context.data_api
+        client_context = sdk.get_client_context()
+        data_api = client_context.data_api
         
         opportunity_id = request.opportunityId
         
