@@ -120,7 +120,18 @@ def create_pdf_from_opportunity_data(opportunity_data: dict, quote_lines: list) 
     opp_name = opportunity_data.get('Name', 'N/A')
     opp_id = opportunity_data.get('Id', 'N/A')
     #account_name = opportunity_data.get('Account', {}).get('Name', 'N/A') if isinstance(opportunity_data.get('Account'), dict) else 'N/A'
+    # Extract Account name - handle both relationship and direct field
     account_name = 'N/A'
+    if 'Account' in opportunity_data:
+        account = opportunity_data.get('Account')
+        if isinstance(account, dict):
+            account_name = account.get('Name', 'N/A')
+        elif isinstance(account, str):
+            # If Account is just an ID string, we need to query it separately
+            account_name = account  # Or set to 'N/A' if you don't want to show ID
+    else:
+        # Try Account.Name directly (if DataAPI flattens it)
+        account_name = opportunity_data.get('Account.Name', 'N/A')
     amount = opportunity_data.get('Amount', 0) or 0
     close_date = opportunity_data.get('CloseDate', 'N/A')
     stage = opportunity_data.get('StageName', 'N/A')
