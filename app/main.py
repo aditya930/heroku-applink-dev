@@ -252,21 +252,32 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
     4. Link the PDF to the Opportunity record
     """
     try:
+        print("=== Starting PDF Generation ===")
+        
         # Get the secure client context from Heroku AppLink middleware
         client_context = sdk.get_client_context()
+        print(f"Client context type: {type(client_context)}")
+        print(f"Client context attributes: {dir(client_context)}")
+        
         data_api = client_context.data_api
+        print(f"Data API type: {type(data_api)}")
+        print(f"Data API attributes: {dir(data_api)}")
         
         opportunity_id = request.opportunityId
+        print(f"Opportunity ID: {opportunity_id}")
         
-        # Query Salesforce for Opportunity data
+        # Query Salesforce for Opportunity data (removed Account.Name to simplify)
         opp_query = f"""
-            SELECT Id, Name, Amount, StageName, CloseDate, Account.Name
+            SELECT Id, Name, Amount, StageName, CloseDate
             FROM Opportunity 
             WHERE Id = '{opportunity_id}' 
             LIMIT 1
         """
         
+        print(f"Running Opportunity query...")
         opp_result = await data_api.query(opp_query)
+        print(f"Query result type: {type(opp_result)}")
+        print(f"Query result attributes: {dir(opp_result)}")
         
         if not opp_result.records:
             return JSONResponse(
@@ -274,7 +285,13 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
                 content={"status": "error", "message": "Opportunity not found", "errorCode": "NOT_FOUND"}
             )
         
+        print(f"Records found: {len(opp_result.records)}")
+        print(f"First record type: {type(opp_result.records[0])}")
+        print(f"First record attributes: {dir(opp_result.records[0])}")
+        
         opp_record = opp_result.records[0].fields
+        print(f"Opp record type: {type(opp_record)}")
+        print(f"Opp record: {opp_record}")
         
         # Query for Quote Line Items
         quote_lines_query = f"""
@@ -283,11 +300,15 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
             WHERE Quote.OpportunityId = '{opportunity_id}'
         """
         
+        print(f"Running QuoteLineItem query...")
         quote_lines_result = await data_api.query(quote_lines_query)
         quote_lines = [record.fields for record in quote_lines_result.records] if quote_lines_result.records else []
+        print(f"Quote lines found: {len(quote_lines)}")
         
         # Generate PDF
+        print("Generating PDF...")
         pdf_bytes = create_pdf_from_opportunity_data(opp_record, quote_lines)
+        print(f"PDF generated, size: {len(pdf_bytes)} bytes")
         
         # Upload PDF to Salesforce
         opp_name = opp_record.get('Name', 'Quote')
@@ -297,18 +318,27 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
             "Title": f"Quote - {opp_name}",
             "PathOnClient": f"Quote_{opportunity_id}_{timestamp}.pdf",
             "VersionData": base64.b64encode(pdf_bytes).decode('utf-8'),
-            #"OwnerId": client_context.user.id,
             "Description": f"Auto-generated quote PDF for Opportunity: {opp_name}"
         }
         
-        # Create ContentVersion
-        cv_response = await data_api.create("ContentVersion", file_data)
+        print("Creating ContentVersion...")
+        print(f"File data keys: {list(file_data.keys())}")
+        
+        # Create ContentVersion - try using object_type parameter name
+        cv_response = await data_api.create(object_type="ContentVersion", record=file_data)
+        print(f"CV Response type: {type(cv_response)}")
+        print(f"CV Response: {cv_response}")
+        print(f"CV Response attributes: {dir(cv_response)}")
+        
         content_version_id = cv_response.id
+        print(f"ContentVersion ID: {content_version_id}")
         
         # Get ContentDocumentId
         cd_query = f"SELECT ContentDocumentId FROM ContentVersion WHERE Id = '{content_version_id}'"
+        print("Querying ContentDocumentId...")
         cd_result = await data_api.query(cd_query)
         content_document_id = cd_result.records[0].fields['ContentDocumentId']
+        print(f"ContentDocument ID: {content_document_id}")
         
         # Link PDF to Opportunity
         cdl_data = {
@@ -317,8 +347,11 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
             "ShareType": "V",
             "Visibility": "AllUsers"
         }
-        await data_api.create("ContentDocumentLink", cdl_data)
+        print("Creating ContentDocumentLink...")
+        await data_api.create(object_type="ContentDocumentLink", record=cdl_data)
+        print("ContentDocumentLink created!")
         
+        print("=== PDF Generation Complete ===")
         return GenerateQuotePdfResponse(
             status="success",
             message="PDF generated and attached to Opportunity.",
@@ -327,12 +360,16 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
         )
         
     except HTTPException as e:
+        print(f"HTTPException: {e}")
         return JSONResponse(
             status_code=e.status_code,
             content=e.detail if isinstance(e.detail, dict) else {"status": "error", "message": str(e.detail), "errorCode": "HTTP_ERROR"}
         )
     except Exception as e:
+        import traceback
         print(f"Error generating PDF: {e}")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Traceback: {traceback.format_exc()}")
         return JSONResponse(
             status_code=500,
             content={"status": "error", "message": f"Internal Server Error: {str(e)}", "errorCode": "INTERNAL_ERROR"}
