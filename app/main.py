@@ -118,7 +118,8 @@ def create_pdf_from_opportunity_data(opportunity_data: dict, quote_lines: list) 
     # Extract Opportunity data
     opp_name = opportunity_data.get('Name', 'N/A')
     opp_id = opportunity_data.get('Id', 'N/A')
-    account_name = opportunity_data.get('Account', {}).get('Name', 'N/A') if isinstance(opportunity_data.get('Account'), dict) else 'N/A'
+    #account_name = opportunity_data.get('Account', {}).get('Name', 'N/A') if isinstance(opportunity_data.get('Account'), dict) else 'N/A'
+    account_name = 'N/A'
     amount = opportunity_data.get('Amount', 0) or 0
     close_date = opportunity_data.get('CloseDate', 'N/A')
     stage = opportunity_data.get('StageName', 'N/A')
