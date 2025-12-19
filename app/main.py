@@ -121,6 +121,7 @@ def create_pdf_from_opportunity_data(opportunity_data: dict, quote_lines: list) 
     opp_id = opportunity_data.get('Id', 'N/A')
     #account_name = opportunity_data.get('Account', {}).get('Name', 'N/A') if isinstance(opportunity_data.get('Account'), dict) else 'N/A'
     # Extract Account name - handle both relationship and direct field
+    print('opportunity_data===>>>>>', opportunity_data)
     account_name = 'N/A'
     if 'Account' in opportunity_data:
         account = opportunity_data.get('Account')
@@ -272,7 +273,7 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
         
         # Query Salesforce for Opportunity data
         opp_query = f"""
-            SELECT Id, Name, Amount, StageName, CloseDate
+            SELECT Id, Name, Amount, StageName, CloseDate, Account.Name
             FROM Opportunity 
             WHERE Id = '{opportunity_id}' 
             LIMIT 1
