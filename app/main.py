@@ -1,10 +1,3 @@
-"""
-Heroku AppLink PDF Quote Generator Service
-==========================================
-A microservice that generates PDF quotes from Salesforce Opportunity data
-and uploads them back to Salesforce via Heroku AppLink.
-"""
-
 import base64
 from datetime import datetime, timezone
 from typing import Optional
@@ -84,7 +77,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 async def global_exception_handler(request: Request, exc: Exception):
     """Catch ALL exceptions (including middleware errors) and return JSON"""
     import traceback
-        # Log the error (will appear in Heroku logs)
+
     print("Exception caught by global handler 234235465365===>>>>>")
     print(f"Exception caught by global handler: {type(exc).__name__}: {str(exc)}")
     print(f"Traceback: {traceback.format_exc()}")
@@ -113,7 +106,7 @@ def create_pdf_from_opportunity_data(opportunity_data: dict, quote_lines: list) 
         PDF as bytes
     """
     
-    # Extract Opportunity data
+
     opp_name = opportunity_data.get('Name', 'N/A')
     opp_id = opportunity_data.get('Id', 'N/A')
 
@@ -121,7 +114,7 @@ def create_pdf_from_opportunity_data(opportunity_data: dict, quote_lines: list) 
     account_name = 'N/A'
     if 'Account' in opportunity_data:
         account = opportunity_data.get('Account')
-        # Account is a QueriedRecord object with .fields attribute
+
         if hasattr(account, 'fields'):
             account_name = account.fields.get('Name', 'N/A')
     amount = opportunity_data.get('Amount', 0) or 0

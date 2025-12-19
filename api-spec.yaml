@@ -10,7 +10,7 @@ info:
     email: support@example.com
 
 servers:
-  - url: https://applink-service-cf5401091eb4.herokuapp.com
+  - url: https://xyz.herokuapp.com
     description: Heroku Production Server
 
 paths:
