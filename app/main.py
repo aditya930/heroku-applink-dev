@@ -295,7 +295,7 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
             "Title": f"Quote - {opp_name}",
             "PathOnClient": f"Quote_{opportunity_id}_{timestamp}.pdf",
             "VersionData": base64.b64encode(pdf_bytes).decode('utf-8'),
-            "OwnerId": client_context.user.id,
+            #"OwnerId": client_context.user.id,
             "Description": f"Auto-generated quote PDF for Opportunity: {opp_name}"
         }
         
