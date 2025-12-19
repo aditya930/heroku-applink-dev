@@ -17,9 +17,8 @@ from weasyprint import HTML
 # Global exception handler to ensure ALL errors return JSON
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-# =============================================================================
+
 # Pydantic Models
-# =============================================================================
 
 class GenerateQuotePdfRequest(BaseModel):
     """Request model for PDF generation"""
@@ -52,9 +51,9 @@ class HealthResponse(BaseModel):
     timestamp: str
 
 
-# =============================================================================
-# FastAPI App Configuration
-# =============================================================================
+
+# FastAPI App Config
+
 
 app = FastAPI(
     title="Opportunity Quote PDF Generator API",
@@ -100,9 +99,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# =============================================================================
 # PDF Generation Logic
-# =============================================================================
 
 def create_pdf_from_opportunity_data(opportunity_data: dict, quote_lines: list) -> bytes:
     """
@@ -119,8 +116,7 @@ def create_pdf_from_opportunity_data(opportunity_data: dict, quote_lines: list) 
     # Extract Opportunity data
     opp_name = opportunity_data.get('Name', 'N/A')
     opp_id = opportunity_data.get('Id', 'N/A')
-    #account_name = opportunity_data.get('Account', {}).get('Name', 'N/A') if isinstance(opportunity_data.get('Account'), dict) else 'N/A'
-    # Extract Account name - handle both relationship and direct field
+
     print('opportunity_data===>>>>>', opportunity_data)
     account_name = 'N/A'
     if 'Account' in opportunity_data:
@@ -226,9 +222,9 @@ def create_pdf_from_opportunity_data(opportunity_data: dict, quote_lines: list) 
     return pdf_bytes
 
 
-# =============================================================================
+
 # API Endpoints
-# =============================================================================
+
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])
 async def health_check():

@@ -35,6 +35,10 @@ paths:
                 summary: Standard Request
                 value:
                   opportunityId: "006XXXXXXXXXXXXXXX"
+      x-sfdc:
+        heroku:
+          authorization:
+            connectedApp: "HerokuAppLinkConnector"
       responses:
         "200":
           description: PDF generated and attached successfully
