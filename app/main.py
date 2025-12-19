@@ -12,6 +12,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 import heroku_applink as sdk
+from heroku_applink.data_api.record import Record
 from weasyprint import HTML
 # Global exception handler to ensure ALL errors return JSON
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -260,7 +261,7 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
         
         # Query Salesforce for Opportunity data
         opp_query = f"""
-            SELECT Id, Name, Amount, StageName, CloseDate, Account.Name
+            SELECT Id, Name, Amount, StageName, CloseDate
             FROM Opportunity 
             WHERE Id = '{opportunity_id}' 
             LIMIT 1
@@ -303,25 +304,31 @@ async def generate_quote_pdf(request: GenerateQuotePdfRequest):
         
         print('Creating Content Version===>>>>>')
         # Create ContentVersion
-        cv_response = await data_api.create("ContentVersion", file_data)
+        cv_record = Record(type="ContentVersion", fields=file_data)
+        content_version_id = await data_api.create(cv_record)
 
-        print(f"Content Version Response===>>>>> {cv_response}")
-        content_version_id = cv_response.id
+        print(f"Content Version Response===>>>>> {content_version_id}")
+
+        #content_version_id = cv_response.id
         
         # Get ContentDocumentId
         cd_query = f"SELECT ContentDocumentId FROM ContentVersion WHERE Id = '{content_version_id}'"
         cd_result = await data_api.query(cd_query)
         content_document_id = cd_result.records[0].fields['ContentDocumentId']
         
-        # Link PDF to Opportunity
-        cdl_data = {
-            "ContentDocumentId": content_document_id,
-            "LinkedEntityId": opportunity_id,
-            "ShareType": "V",
-            "Visibility": "AllUsers"
-        }
-        await data_api.create("ContentDocumentLink", cdl_data)
-        
+        # Link PDF to Opportunity using Record object
+        cdl_record = Record(
+            type="ContentDocumentLink",
+            fields={
+                "ContentDocumentId": content_document_id,
+                "LinkedEntityId": opportunity_id,
+                "ShareType": "V",
+                "Visibility": "AllUsers"
+            }
+        )
+        await data_api.create(cdl_record)
+        print("ContentDocumentLink created!")
+
         return GenerateQuotePdfResponse(
             status="success",
             message="PDF generated and attached to Opportunity.",
