@@ -85,6 +85,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     """Catch ALL exceptions (including middleware errors) and return JSON"""
     import traceback
         # Log the error (will appear in Heroku logs)
+    print("Exception caught by global handler 234235465365===>>>>>")
     print(f"Exception caught by global handler: {type(exc).__name__}: {str(exc)}")
     print(f"Traceback: {traceback.format_exc()}")
     return JSONResponse(
